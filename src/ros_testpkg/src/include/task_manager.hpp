@@ -15,7 +15,6 @@ class TaskManager{
         void task1();
         void task2();
         
-        TurtleDriver turtle_driver_;
     private:
     
         ros::NodeHandle nh_;

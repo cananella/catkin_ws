@@ -18,10 +18,11 @@ TurtleDriver::~TurtleDriver(){
 
 void TurtleDriver::subscriberThread(){
     pose_sub_=nh_.subscribe("/turtle1/pose", 10, &TurtleDriver::updatePose, this);
-    ros::AsyncSpinner spinner(1);
-    spinner.start();
-
-    ros::waitForShutdown();
+    ros::Rate loop_rate(62);
+    while(running_){
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 }
 
 void TurtleDriver::updatePose(const turtlesim::Pose::ConstPtr& msg){
@@ -93,22 +94,22 @@ void TurtleDriver::moveAngular(float angular, float angular_speed){
 
     float threshold1 = PI/2;
     float threshold2 = PI/4;
-    float threshold3 = 0.02f;
+    float threshold3 = 0.05f;
 
-    while(ros::ok() && std::abs(turtle_pose_.angular.z - target_theta) > threshold){
-
+    while(ros::ok() && std::fabs(turtle_pose_.angular.z - target_theta) > threshold){
+    
 #if Debug
         std::cout<<"current theta : "<< turtle_pose_.angular.z << "     target theta : "<< target_theta<<" \n";
 #endif
 
-        if(std::abs(turtle_pose_.angular.z - target_theta) > threshold1) cmd_vel_pub_.publish(cmd);
+        if(std::fabs(turtle_pose_.angular.z - target_theta) > threshold1) cmd_vel_pub_.publish(cmd);
 
-        else if(std::abs(turtle_pose_.angular.z - target_theta) > threshold2) {
+        else if(std::fabs(turtle_pose_.angular.z - target_theta) > threshold2) {
             cmd.angular.z=1;
             cmd_vel_pub_.publish(cmd);
         }
 
-        else if(std::abs(turtle_pose_.angular.z - target_theta) > threshold3){
+        else if(std::fabs(turtle_pose_.angular.z - target_theta) > threshold3){
             cmd.angular.z=0.1;
             cmd_vel_pub_.publish(cmd);
         }

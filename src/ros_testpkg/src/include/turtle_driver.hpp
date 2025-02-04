@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #define PI 3.14159265358979323846
-#define MAX_ANGULAR_SPEED 1.5
+#define MAX_ANGULAR_SPEED 0.5
 #define MAX_LINEAR_SPEED 1.5
 
 class TurtleDriver{
