@@ -1,5 +1,5 @@
 #include "include/task_manager.hpp"
-#define Debug false
+#include<memory>
 
 TaskManager::TaskManager() : task_flag(true){
     start_trigger_=nh_.subscribe("/driver_start", 1, &TaskManager::task_Controll, this);
@@ -11,10 +11,15 @@ TaskManager::TaskManager() : task_flag(true){
 
 void TaskManager::task_Controll(const std_msgs::Bool::ConstPtr& msg){
     if(msg){
-        task1();
-        kill("turtle1");
+        std::string robot1_name="turtle1";
+        std::string robot2_name="turtle2";
+
+        task1(robot1_name);
+        kill(robot1_name);
         clear();
-        spawn("turtle2");
+        spawn(robot2_name);
+        sleep(2.0);
+        task2(robot2_name);
 
         std::cout<<"task done \n";
         task_flag = false;
@@ -25,8 +30,9 @@ void TaskManager::task_Controll(const std_msgs::Bool::ConstPtr& msg){
     }
 }
 
-void TaskManager::task1(){
-    TurtleDriver* turtle_driver_ = new TurtleDriver("turtle1");
+void TaskManager::task1(std::string name){
+    std::shared_ptr<TurtleDriver> turtle_driver_ = std::make_shared<TurtleDriver>(name);
+
     float line_len=2.0f;
     turtle_driver_->moveLinear(line_len);
     turtle_driver_->moveAngular(PI/2);
@@ -45,12 +51,19 @@ void TaskManager::task1(){
 
     turtle_driver_->moveLinear(line_len);
 
-    delete turtle_driver_;
-
 }
 
-void TaskManager::task2(){
+void TaskManager::task2(std::string name){
+    std::shared_ptr<TurtleDriver> turtle_driver_ = std::make_shared<TurtleDriver>(name);
 
+    turtle_driver_->moveArc(2*M_PI,2.0f,1.5f);
+
+    turtle_driver_->moveArc(M_PI,2.0f,-1.5f);
+
+    turtle_driver_->moveArc(M_PI,2.0f,-3.0f);
+    
+    turtle_driver_->moveArc(M_PI,2.0f,3.0f);
+    
 }
 
 

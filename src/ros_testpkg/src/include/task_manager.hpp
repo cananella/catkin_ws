@@ -17,11 +17,12 @@ class TaskManager{
         TaskManager();
 
         void task_Controll(const std_msgs::Bool::ConstPtr& msg);
-        void task1();
-        void task2();
+        void task1(std::string name);
+        void task2(std::string name);
+
         bool kill(std::string name);
         bool clear();
-        bool spawn(std::string name, float x=5.0f, float y=5.0f, float theta=0.0);
+        bool spawn(std::string name, float x=5.5f, float y=5.5f, float theta=0.0);
         
     private:
     
@@ -32,7 +33,5 @@ class TaskManager{
         ros::ServiceClient spawn_service_;
 
 };
-
-
 
 #endif

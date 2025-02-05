@@ -1,6 +1,8 @@
 #ifndef TURTLE_DRIVER_HPP
 #define TURTLE_DRIVER_HPP
 
+#define DebugLevel 0
+
 #include <iostream>
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
@@ -23,6 +25,7 @@ class TurtleDriver{
         void move(float linear, float angular);
         void moveLinear(float linear  , float linear_speed  = MAX_LINEAR_SPEED);
         void moveAngular(float angular, float angular_speed = MAX_ANGULAR_SPEED);
+        void moveArc(float target_angular, float linear_speed = MAX_LINEAR_SPEED ,float angular_speed = MAX_ANGULAR_SPEED);
 
     private:
         void updatePose(const turtlesim::Pose::ConstPtr& msg);
