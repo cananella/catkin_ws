@@ -6,7 +6,7 @@ int main(int argc, char ** argv) {
     TaskManager task_manager;
     
     ros::Rate loop_rate(10);
-    while(ros::ok()){
+    while(ros::ok()&& task_manager.task_flag){
         ros::spinOnce();
         loop_rate.sleep();
     }

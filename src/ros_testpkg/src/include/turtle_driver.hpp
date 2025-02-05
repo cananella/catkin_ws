@@ -8,6 +8,7 @@
 #include <thread>
 #include <cmath>
 #include <unistd.h>
+#include <mutex>
 
 #define PI 3.14159265358979323846
 #define MAX_ANGULAR_SPEED 0.5
@@ -16,6 +17,7 @@
 class TurtleDriver{
     public:
         TurtleDriver();
+        TurtleDriver(std::string name);
         ~TurtleDriver();
 
         void move(float linear, float angular);
@@ -31,10 +33,13 @@ class TurtleDriver{
         ros::Publisher cmd_vel_pub_;
         ros::Subscriber pose_sub_;
 
+        std::string robotname ;
         std::thread subThread_;
         geometry_msgs::Twist turtle_pose_;
 
         bool running_;
+
+        std::mutex mtx;
 
 };
 
