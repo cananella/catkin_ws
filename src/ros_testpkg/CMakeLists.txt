@@ -26,7 +26,14 @@ add_executable(turtle_driver_node
   src/turtle_driver.cpp
   src/task_manager.cpp
 )
+add_executable(realistic_drive 
+  src/realistic_drive.cpp
+)
 
-target_link_libraries(turtle_driver_node
+target_link_libraries(turtle_driver_node 
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(realistic_drive 
   ${catkin_LIBRARIES}
 )

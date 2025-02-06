@@ -1,8 +1,6 @@
 #ifndef TURTLE_DRIVER_HPP
 #define TURTLE_DRIVER_HPP
 
-#define DebugLevel 0
-
 #include <iostream>
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
@@ -12,6 +10,7 @@
 #include <unistd.h>
 #include <mutex>
 
+#define DebugLevel 0
 #define PI 3.14159265358979323846
 #define MAX_ANGULAR_SPEED 0.5
 #define MAX_LINEAR_SPEED 1.5

@@ -24,7 +24,8 @@ TurtleDriver::~TurtleDriver(){
 }
 
 void TurtleDriver::subscriberThread(){
-    if(robotname.length() == 0) pose_sub_=nh_.subscribe("/turtle1/pose", 2, &TurtleDriver::updatePose, this);
+    if(robotname.length() == 0) 
+        pose_sub_=nh_.subscribe("/turtle1/pose", 2, &TurtleDriver::updatePose, this);
     else pose_sub_=nh_.subscribe(robotname + "/pose", 2, &TurtleDriver::updatePose, this);
 
     ros::Rate loop_rate(70);
@@ -83,6 +84,10 @@ void TurtleDriver::moveLinear(float linear, float linear_speed){
             cmd.linear.x = 0.05f;
             cmd_vel_pub_.publish(cmd);
         }
+        else if(move_distance<target_distance-threshold){
+            cmd.linear.x = 0.01f;
+            cmd_vel_pub_.publish(cmd);
+        }
     }
     cmd.linear.x=0.0f;
     cmd_vel_pub_.publish(cmd);
@@ -127,6 +132,11 @@ void TurtleDriver::moveAngular(float angular, float angular_speed){
 
         else if(std::fabs(current_pos.angular.z - target_theta) > threshold3){
             cmd.angular.z = (is_cw_turn) ? -0.1f : 0.1f;
+            cmd_vel_pub_.publish(cmd);
+        }
+
+        else if(std::fabs(current_pos.angular.z - target_theta) > threshold){
+            cmd.angular.z = (is_cw_turn) ? -0.08f : 0.08f;
             cmd_vel_pub_.publish(cmd);
         }
 
@@ -182,6 +192,12 @@ void TurtleDriver::moveArc(float target_angular, float linear_speed ,float angul
         else if(std::fabs(current_pos.angular.z - target_theta) > threshold3){
             cmd.linear.x = linear_speed/4;
             cmd.angular.z = angular_speed/4;
+            cmd_vel_pub_.publish(cmd);
+        }
+
+        else if(std::fabs(current_pos.angular.z - target_theta) > threshold){
+            cmd.linear.x = linear_speed/5;
+            cmd.angular.z = angular_speed/5;
             cmd_vel_pub_.publish(cmd);
         }
     }
