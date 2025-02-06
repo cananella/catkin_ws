@@ -22,7 +22,7 @@ class TaskManager{
 
         bool kill(std::string name);
         bool clear();
-        bool spawn(std::string name, float x=5.5f, float y=5.5f, float theta=0.0);
+        bool spawn(std::string name, float x=5.544444561004639f, float y=5.544444561004639f, float theta=0.0);
         
     private:
     

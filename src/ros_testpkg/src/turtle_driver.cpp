@@ -2,7 +2,8 @@
 
 
 TurtleDriver::TurtleDriver(): running_(true){
-    cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel",10);
+    sleep(0.1);
+    cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/turtle1/realistic/cmd_vel",10);
     subThread_=std::thread(&TurtleDriver::subscriberThread,this);
     sleep(1);
 }
@@ -10,6 +11,7 @@ TurtleDriver::TurtleDriver(): running_(true){
 TurtleDriver::TurtleDriver(std::string name): running_(true){
     robotname = "/"+name;
     sleep(0.1);
+    // cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(robotname+"/cmd_vel",10);
     cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(robotname+"/cmd_vel",10);
     subThread_=std::thread(&TurtleDriver::subscriberThread,this);
     sleep(1);
@@ -107,8 +109,9 @@ void TurtleDriver::moveAngular(float angular, float angular_speed){
     if (target_theta > M_PI) target_theta -= 2 * M_PI;
     if (target_theta < -M_PI) target_theta += 2 * M_PI;
 
-    cmd.angular.z = (angular > 0) ? angular_speed : -angular_speed;
-    bool is_cw_turn = (cmd.angular.z > 0)? false : true ; 
+    
+    float target_velocity  = (angular > 0) ? angular_speed : -angular_speed;
+    bool is_cw_turn = (target_velocity > 0)? false : true ; 
 
     float threshold =0.001f;
 
@@ -123,22 +126,23 @@ void TurtleDriver::moveAngular(float angular, float angular_speed){
         std::cout<<"current theta : "<< turtle_pose_.angular.z << "     target theta : "<< target_theta<<" \n";
 #endif
 
-        if(std::fabs(current_pos.angular.z - target_theta) > threshold1) cmd_vel_pub_.publish(cmd);
+        if(std::fabs(current_pos.angular.z - target_theta) > threshold1) target_velocity = angular_speed;
 
         else if(std::fabs(current_pos.angular.z - target_theta) > threshold2) {
-            cmd.angular.z = (is_cw_turn) ? -1.0f : 1.0f;
-            cmd_vel_pub_.publish(cmd);
+            target_velocity = (is_cw_turn) ? -1.0f : 1.0f;
         }
 
         else if(std::fabs(current_pos.angular.z - target_theta) > threshold3){
-            cmd.angular.z = (is_cw_turn) ? -0.1f : 0.1f;
-            cmd_vel_pub_.publish(cmd);
+            target_velocity = (is_cw_turn) ? -0.1f : 0.1f;
         }
 
         else if(std::fabs(current_pos.angular.z - target_theta) > threshold){
-            cmd.angular.z = (is_cw_turn) ? -0.08f : 0.08f;
-            cmd_vel_pub_.publish(cmd);
-        }
+            target_velocity = (is_cw_turn) ? -0.08f : 0.08f;
+            
+        }else target_velocity=0.0f;
+
+        cmd.angular.z=target_velocity;
+        cmd_vel_pub_.publish(cmd);
 
     }
     cmd.angular.z=0.0f;
@@ -153,7 +157,7 @@ void TurtleDriver::moveArc(float target_angular, float linear_speed ,float angul
 
     float initial_theta = turtle_pose_.angular.z;
     float target_theta = initial_theta + target_angular;
-
+    float total_theta = initial_theta;
     if (target_theta > 3*M_PI) target_theta -= 3 * M_PI;
     if (target_theta < 0) target_theta += 2 * M_PI;
     current_pos.angular.z = (turtle_pose_.angular.z < 0)? (turtle_pose_.angular.z + 2*M_PI) : turtle_pose_.angular.z;
@@ -164,42 +168,131 @@ void TurtleDriver::moveArc(float target_angular, float linear_speed ,float angul
     auto duration= ros::Duration(2.0);
     duration.sleep();
 
-    float threshold =0.01f;
+    float threshold =0.1f;
     float threshold1 = PI/2;
     float threshold2 = PI/4;
-    float threshold3 = 0.05f;
+    float threshold3 = 0.4f;
 
     cmd.linear.x = linear_speed;
     cmd.angular.z = angular_speed;
 
     current_pos.angular.z = (turtle_pose_.angular.z < 0)? (turtle_pose_.angular.z + 2*M_PI) : turtle_pose_.angular.z;
+    
+    while(ros::ok() && std::fabs(total_theta - target_theta) > threshold){
+        float prev_theta = total_theta;
+        float current_theta = (turtle_pose_.angular.z < 0)? (turtle_pose_.angular.z + 2 * M_PI) : turtle_pose_.angular.z;    
+        float delta_theta = current_theta - prev_theta;
+        if (delta_theta > M_PI) {
+            delta_theta -= 2 * M_PI;
+        } else if (delta_theta < -M_PI) {
+            delta_theta += 2 * M_PI;
+        }
 
-    while(ros::ok() && std::fabs(current_pos.angular.z - target_theta) > threshold){
-        current_pos.angular.z = (turtle_pose_.angular.z < 0)? (turtle_pose_.angular.z + 2 * M_PI) : turtle_pose_.angular.z;    
+        total_theta += delta_theta; 
 
 #if DebugLevel >=1
-        std::cout<<"current theta : "<< current_pos.angular.z << "     target theta : "<< target_theta<<" \n";
+        std::cout<<"current theta : "<< total_theta << "     target theta : "<< target_theta<<" \n";
 #endif
 
-        if(std::fabs(current_pos.angular.z - target_theta) > threshold1) cmd_vel_pub_.publish(cmd);
+        if(std::fabs(total_theta - target_theta) > threshold1) cmd_vel_pub_.publish(cmd);
 
-        else if(std::fabs(current_pos.angular.z - target_theta) > threshold2) {
+        else if(std::fabs(total_theta - target_theta) > threshold2) {
             cmd.linear.x = linear_speed/2;
             cmd.angular.z = angular_speed/2;
             cmd_vel_pub_.publish(cmd);
         }
 
-        else if(std::fabs(current_pos.angular.z - target_theta) > threshold3){
+        else if(std::fabs(total_theta - target_theta) > threshold3){
             cmd.linear.x = linear_speed/4;
             cmd.angular.z = angular_speed/4;
             cmd_vel_pub_.publish(cmd);
         }
 
-        else if(std::fabs(current_pos.angular.z - target_theta) > threshold){
+        else if(std::fabs(total_theta - target_theta) > threshold){
             cmd.linear.x = linear_speed/5;
             cmd.angular.z = angular_speed/5;
             cmd_vel_pub_.publish(cmd);
         }
+    }
+    cmd.angular.z=0.0f;
+    cmd.linear.x =0.0f;
+    cmd_vel_pub_.publish(cmd);
+
+}
+
+
+void TurtleDriver::moveArcWithPID(float target_angular, float linear_speed ,float angular_speed ){
+    geometry_msgs::Twist cmd;
+    geometry_msgs::Twist current_pos = turtle_pose_;
+
+    float initial_theta = turtle_pose_.angular.z;
+    float target_theta = initial_theta + target_angular;
+    float total_theta = initial_theta;
+    if (target_theta > 3*M_PI) target_theta -= 3 * M_PI;
+    if (target_theta < 0) target_theta += 2 * M_PI;
+    current_pos.angular.z = (turtle_pose_.angular.z < 0)? (turtle_pose_.angular.z + 2*M_PI) : turtle_pose_.angular.z;
+
+    std::cout<<"current theta : "<< current_pos.angular.z << "     target theta : "<< target_theta<<" \n";
+    
+    std::cout<<"sleep 2s \n";
+    auto duration= ros::Duration(2.0);
+    duration.sleep();
+
+    float threshold =0.1f;
+    float threshold1 = PI/2;
+    float threshold2 = PI/4;
+    float threshold3 = 0.4f;
+    float target_linear_velocity;
+    float target_angular_velocity;
+    target_linear_velocity = linear_speed;
+    target_angular_velocity = angular_speed;
+
+    current_pos.angular.z = (turtle_pose_.angular.z < 0)? (turtle_pose_.angular.z + 2*M_PI) : turtle_pose_.angular.z;
+    
+    while(ros::ok() && std::fabs(total_theta - target_theta) > threshold){
+        float prev_theta = total_theta;
+        float current_theta = (turtle_pose_.angular.z < 0)? (turtle_pose_.angular.z + 2 * M_PI) : turtle_pose_.angular.z;    
+        float delta_theta = current_theta - prev_theta;
+        if (delta_theta > M_PI) {
+            delta_theta -= 2 * M_PI;
+        } else if (delta_theta < -M_PI) {
+            delta_theta += 2 * M_PI;
+        }
+
+        total_theta += delta_theta; 
+
+#if DebugLevel >=1
+        std::cout<<"current theta : "<< total_theta << "     target theta : "<< target_theta<<" \n";
+#endif
+
+        if(std::fabs(total_theta - target_theta) > threshold1) {
+            target_linear_velocity = linear_speed;
+            target_angular_velocity = angular_speed;
+        }
+
+        else if(std::fabs(total_theta - target_theta) > threshold2) {
+            target_linear_velocity = linear_speed/2;
+            target_angular_velocity = angular_speed/2;
+        }
+
+        else if(std::fabs(total_theta - target_theta) > threshold3){
+            target_linear_velocity = linear_speed/4;
+            target_angular_velocity = angular_speed/4;
+        }
+
+        else if(std::fabs(total_theta - target_theta) > threshold){
+            target_linear_velocity = linear_speed/5;
+            target_angular_velocity = angular_speed/5;
+        }
+
+        else{
+            target_linear_velocity =0.0f;
+            target_angular_velocity =0.0f;
+        }
+
+    cmd.angular.z=target_angular_velocity;
+    cmd.linear.x =target_linear_velocity;
+        cmd_vel_pub_.publish(cmd);
     }
     cmd.angular.z=0.0f;
     cmd.linear.x =0.0f;

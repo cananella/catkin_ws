@@ -25,7 +25,7 @@ class TurtleDriver{
         void moveLinear(float linear  , float linear_speed  = MAX_LINEAR_SPEED);
         void moveAngular(float angular, float angular_speed = MAX_ANGULAR_SPEED);
         void moveArc(float target_angular, float linear_speed = MAX_LINEAR_SPEED ,float angular_speed = MAX_ANGULAR_SPEED);
-
+        void moveArcWithPID(float target_angular, float linear_speed = MAX_LINEAR_SPEED ,float angular_speed = MAX_ANGULAR_SPEED);
     private:
         void updatePose(const turtlesim::Pose::ConstPtr& msg);
         void subscriberThread();
@@ -40,6 +40,8 @@ class TurtleDriver{
         geometry_msgs::Twist turtle_pose_;
 
         bool running_;
+        float linear_vel=0.0f;
+        float angular_vel=0.0f;
 
         std::mutex mtx;
 
